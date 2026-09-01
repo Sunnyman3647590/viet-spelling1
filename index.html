@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>越南语拼读 · 离线版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #f0f4f8; padding: 12px; padding-bottom: 100px; }
+        .app-header { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: white; padding: 16px 20px; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3); }
+        .app-header h1 { font-size: 22px; font-weight: 600; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .app-header p { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+        .app-header .tts-badge { background: rgba(255,255,255,0.2); padding: 2px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; display: inline-block; margin-top: 6px; }
+        .offline-badge { background: #4caf50; color: white; font-size: 11px; padding: 2px 10px; border-radius: 20px; margin-left: 8px; }
+        .search-box { background: white; border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .search-box input { flex: 1; min-width: 150px; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 30px; font-size: 16px; outline: none; transition: 0.2s; background: #f8fafc; }
+        .search-box input:focus { border-color: #1a73e8; background: white; }
+        .search-box .btn { padding: 10px 20px; border: none; border-radius: 30px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+        .btn-primary { background: #1a73e8; color: white; }
+        .btn-primary:active { transform: scale(0.96); background: #0d47a1; }
+        .btn-outline { background: transparent; color: #1a73e8; border: 2px solid #1a73e8; }
+        .btn-outline:active { background: #1a73e8; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:active { background: #c0392b; }
+        .card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .card-title { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .card-title .badge { font-size: 11px; background: #e2e8f0; padding: 1px 10px; border-radius: 20px; font-weight: 400; color: #475569; }
+        .result-area { min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; border-radius: 12px; padding: 20px; text-align: center; }
+        .result-word { font-size: 32px; font-weight: 700; color: #0f172a; }
+        .result-spelling { font-size: 20px; color: #1a73e8; margin-top: 6px; font-weight: 500; letter-spacing: 1px; }
+        .result-detail { font-size: 14px; color: #64748b; margin-top: 4px; }
+        .play-btn { margin-top: 12px; padding: 10px 32px; border: none; border-radius: 30px; background: #1a73e8; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .play-btn:active { transform: scale(0.95); background: #0d47a1; }
+        .play-btn:disabled { opacity: 0.5; transform: none; }
+        .syllable-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; margin-top: 8px; }
+        .syllable-chip { background: #f1f5f9; padding: 8px 6px; border-radius: 10px; text-align: center; font-size: 16px; font-weight: 500; color: #0f172a; cursor: pointer; transition: 0.2s; border: 2px solid transparent; user-select: none; }
+        .syllable-chip:active { transform: scale(0.94); background: #dbeafe; border-color: #1a73e8; }
+        .tab-bar { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0; margin-bottom: 12px; flex-wrap: nowrap; }
+        .tab-bar .tab-btn { padding: 8px 16px; border: none; border-radius: 30px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; background: #e2e8f0; color: #475569; transition: 0.2s; }
+        .tab-bar .tab-btn.active { background: #1a73e8; color: white; }
+        .tab-bar .tab-btn:active { transform: scale(0.95); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .minimal-pair { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #f1f5f9; gap: 8px; flex-wrap: wrap; }
+        .minimal-pair:last-child { border-bottom: none; }
+        .minimal-pair .pair-item { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 100px; }
+        .minimal-pair .pair-word { font-size: 18px; font-weight: 600; color: #0f172a; cursor: pointer; }
+        .minimal-pair .pair-zh { font-size: 13px; color: #64748b; }
+        .minimal-pair .pair-play { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px 8px; }
+        .fav-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0 4px; }
+        .footer { text-align: center; padding: 20px 0 10px; font-size: 12px; color: #94a3b8; }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 30px; font-size: 14px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 999; max-width: 90%; text-align: center; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .status-text { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+        .phoneme-section { margin-bottom: 12px; }
+        .phoneme-section .section-label { font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .phoneme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(55px, 1fr)); gap: 6px; }
+        .phoneme-chip { background: #e8edf5; padding: 8px 4px; border-radius: 8px; text-align: center; font-size: 18px; font-weight: 600; color: #0f172a; cursor: pointer; transition: 0.2s; border: 2px solid transparent; user-select: none; }
+        .phoneme-chip:active { transform: scale(0.92); background: #dbeafe; border-color: #1a73e8; }
+        .phoneme-chip .sub { font-size: 11px; font-weight: 400; color: #94a3b8; display: block; }
+        .phoneme-chip .ipa-badge { font-size: 10px; font-weight: 400; color: #e74c3c; display: block; font-family: monospace; }
+        @media (max-width: 480px) {
+            .app-header h1 { font-size: 18px; }
+            .result-word { font-size: 26px; }
+            .result-spelling { font-size: 17px; }
+            .syllable-grid { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 6px; }
+            .syllable-chip { font-size: 14px; padding: 6px 4px; }
+            .phoneme-grid { grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); }
+            .phoneme-chip { font-size: 15px; padding: 6px 2px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <h1>🇻🇳 越南语拼读 <span class="offline-badge">📴 完全离线</span></h1>
+        <p>点击字母或音节 · 听本地发音</p>
+        <span class="tts-badge">🔊 内置音频包</span>
+        <div class="status-text" id="statusText">⏳ 正在加载音频...</div>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="输入越南语，如 ba, bạn..." />
+        <button class="btn btn-primary" id="searchBtn">拼读</button>
+        <button class="btn btn-outline" id="randomBtn">🎲 随机</button>
+    </div>
+
+    <div class="card">
+        <div class="result-area" id="resultArea">
+            <div class="result-word" id="resultWord">ba</div>
+            <div class="result-spelling" id="resultSpelling">bờ ... a ... ba</div>
+            <div class="result-detail" id="resultDetail">辅音: b | 元音: a | 声调: 平声</div>
+            <button class="play-btn" id="playBtn">🔊 播放拼读</button>
+        </div>
+    </div>
+
+    <div class="tab-bar" id="tabBar">
+        <button class="tab-btn active" data-tab="tabPhonemes">🔤 字母</button>
+        <button class="tab-btn" data-tab="tabConsonantVowel">🔗 拼读</button>
+        <button class="tab-btn" data-tab="tabTones">🎵 声调</button>
+        <button class="tab-btn" data-tab="tabFinal">📎 后辅音</button>
+        <button class="tab-btn" data-tab="tabMinimal">🔍 辨音</button>
+        <button class="tab-btn" data-tab="tabFavorites">⭐ 收藏</button>
+    </div>
+
+    <div id="tabPhonemes" class="tab-content active">
+        <div class="card">
+            <div class="card-title">🔤 元音 <span class="badge">12个</span></div>
+            <div class="phoneme-grid" id="vowelGrid"></div>
+        </div>
+        <div class="card">
+            <div class="card-title">🔤 辅音 <span class="badge">27个</span></div>
+            <div class="phoneme-grid" id="consonantGrid"></div>
+        </div>
+        <div class="card" style="background:#f8fafc;">
+            <div style="font-size:13px; color:#64748b; text-align:center;">
+                💡 点击字母播放标准发音 · 点击「拼读」Tab练习组合
+            </div>
+        </div>
+    </div>
+
+    <div id="tabConsonantVowel" class="tab-content">
+        <div class="card">
+            <div class="card-title">辅音 + 元音 拼读 <span class="badge">基础音节</span></div>
+            <div id="cvGrid" class="syllable-grid"></div>
+        </div>
+    </div>
+
+    <div id="tabTones" class="tab-content">
+        <div class="card">
+            <div class="card-title">声调练习 <span class="badge">6声</span></div>
+            <div id="toneGrid" class="syllable-grid"></div>
+        </div>
+    </div>
+
+    <div id="tabFinal" class="tab-content">
+        <div class="card">
+            <div class="card-title">后辅音组合 <span class="badge">-m -p -n -t -nh -ch -ng -c</span></div>
+            <div id="finalGrid" class="syllable-grid"></div>
+        </div>
+    </div>
+
+    <div id="tabMinimal" class="tab-content">
+        <div class="card">
+            <div class="card-title">辨音练习 <span class="badge">易混淆</span></div>
+            <div id="minimalList"></div>
+        </div>
+    </div>
+
+    <div id="tabFavorites" class="tab-content">
+        <div class="card">
+            <div class="card-title">⭐ 收藏的音节</div>
+            <div id="favoritesList">
+                <p style="color:#94a3b8; font-size:14px; text-align:center; padding:20px 0;">点击音节旁的 ☆ 收藏</p>
+            </div>
+            <button class="btn btn-danger" id="clearFavBtn" style="margin-top:10px; width:100%;">清空收藏</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="footer">数据本地存储 · 完全离线发音 (内置MP3)</div>
+
+    <script>
+        // ============================================================
+        // 1. 数据
+        // ============================================================
+        const DATA = {
+            vowels: ['a', 'ă', 'â', 'e', 'ê', 'i', 'o', 'ô', 'ơ', 'u', 'ư', 'y'],
+            consonants: ['b', 'p', 'm', 'n', 't', 'đ', 'th', 'ng', 'ngh', 'l', 'nh', 'ph', 'v', 'h', 'kh', 'g', 'gh', 's', 'x', 'ch', 'tr', 'd', 'gi', 'r', 'c', 'k', 'qu'],
+            cvTable: {
+                'b': ['ba', 'be', 'bê', 'bi', 'bo', 'bô', 'bơ', 'bu', 'bư'],
+                'p': ['pa', 'pe', 'pê', 'pi', 'po', 'pô', 'pơ', 'pu', 'pư'],
+                'm': ['ma', 'me', 'mê', 'mi', 'my', 'mo', 'mô', 'mơ', 'mu', 'mư'],
+                'n': ['na', 'ne', 'nê', 'ni', 'no', 'nô', 'nơ', 'nu', 'nư'],
+                'nh': ['nha', 'nhe', 'nhê', 'nhi', 'nho', 'nhô', 'nhơ', 'nhu', 'như'],
+                'ng': ['nga', 'nge', 'ngê', 'ngi', 'ngo', 'ngô', 'ngơ', 'ngu', 'ngư'],
+                'ngh': ['ngha', 'nghe', 'nghê', 'nghi', 'ngho', 'nghô', 'nghơ', 'nghu', 'nghư'],
+                'l': ['la', 'le', 'lê', 'li', 'ly', 'lo', 'lô', 'lơ', 'lu', 'lư'],
+                'đ': ['đa', 'đe', 'đê', 'đi', 'đo', 'đô', 'đơ', 'đu', 'đư'],
+                't': ['ta', 'te', 'tê', 'ti', 'ty', 'to', 'tô', 'tơ', 'tu', 'tư'],
+                'th': ['tha', 'the', 'thê', 'thi', 'tho', 'thô', 'thơ', 'thu', 'thư'],
+                'ch': ['cha', 'che', 'chê', 'chi', 'cho', 'chô', 'chơ', 'chu', 'chư'],
+                'tr': ['tra', 'tre', 'trê', 'tri', 'tro', 'trô', 'trơ', 'tru', 'trư'],
+                'k': ['ke', 'kê', 'ki', 'ky'],
+                'c': ['ca', 'co', 'cô', 'cơ', 'cu', 'cư'],
+                'qu': ['qua', 'que', 'quê', 'qui', 'quy'],
+                'kh': ['kha', 'khe', 'khê', 'khi', 'kho', 'khô', 'khơ', 'khu', 'khư'],
+                'x': ['xa', 'xe', 'xê', 'xi', 'xo', 'xô', 'xơ', 'xu', 'xư'],
+                's': ['sa', 'se', 'sê', 'si', 'so', 'sô', 'sơ', 'su', 'sư'],
+                'd': ['da', 'de', 'dê', 'di', 'do', 'dô', 'dơ', 'du', 'dư'],
+                'gi': ['gia', 'gie', 'giê', 'gi', 'gio', 'giô', 'giơ', 'giu', 'giư'],
+                'r': ['ra', 're', 'rê', 'ri', 'ro', 'rô', 'rơ', 'ru', 'rư'],
+                'h': ['ha', 'he', 'hê', 'hi', 'hy', 'ho', 'hô', 'hơ', 'hu', 'hư'],
+                'g': ['ga', 'go', 'gô', 'gơ', 'gu', 'gư'],
+                'gh': ['ghe', 'ghê', 'ghi'],
+                'v': ['va', 've', 'vê', 'vi', 'vo', 'vô', 'vơ', 'vu', 'vư'],
+                'ph': ['pha', 'phe', 'phê', 'phi', 'pho', 'phô', 'phơ', 'phu', 'phư']
+            },
+            toneWords: {
+                'ba': ['ba', 'bà', 'bá', 'bả', 'bã', 'bạ'],
+                'pe': ['pe', 'pè', 'pé', 'pẻ', 'pẽ', 'pẹ'],
+                'mo': ['mo', 'mò', 'mó', 'mỏ', 'mõ', 'mọ'],
+                'nó': ['nó', 'nò', 'nố', 'nỏ', 'nõ', 'nọ'],
+                'nhó': ['nhó', 'nhò', 'nhố', 'nhỏ', 'nhõ', 'nhọ'],
+                'ngu': ['ngu', 'ngù', 'ngú', 'ngủ', 'ngũ', 'ngụ']
+            },
+            finalTable: {
+                'a': ['am', 'ap', 'an', 'at', 'anh', 'ach', 'ang', 'ac'],
+                'ă': ['ăm', 'ăp', 'ăn', 'ăt', 'ăng', 'ăc'],
+                'e': ['em', 'ep', 'en', 'et', 'eng', 'ec'],
+                'ê': ['êm', 'êp', 'ên', 'êt', 'ênh', 'êch'],
+                'i': ['im', 'ip', 'in', 'it', 'inh', 'ich'],
+                'o': ['om', 'op', 'on', 'ot', 'onh', 'och', 'ong', 'oc'],
+                'ô': ['ôm', 'ôp', 'ôn', 'ôt', 'ônh', 'ôch', 'ông', 'ôc'],
+                'u': ['um', 'up', 'un', 'ut', 'unh', 'uch', 'ung', 'uc'],
+                'ư': ['ưm', 'ưp', 'ưn', 'ưt', 'ưnh', 'ưch', 'ưng', 'ưc'],
+                'ơ': ['ơm', 'ơp', 'ơn', 'ơt', 'ơng', 'ơc'],
+                'â': ['âm', 'âp', 'ân', 'ât', 'âng', 'âc']
+            },
+            minimalPairs: [
+                ['nhanh', '快', 'nhênh', '倾斜'],
+                ['lanh', '灵巧', 'lạch', '小溪'],
+                ['hát', '唱歌', 'hắt', '泼洒'],
+                ['hẹn', '约定', 'hẹt', '狭窄'],
+                ['táp', '咬住', 'tập', '练习'],
+                ['tác', '作用', 'tắc', '阻塞'],
+                ['hách', '霸道', 'hếch', '翘起'],
+                ['kẹt', '卡住', 'kết', '连接'],
+                ['tám', '八', 'tăm', '牙签'],
+                ['bàn', '桌子', 'bạn', '朋友'],
+                ['các', '各', 'cát', '沙子'],
+                ['cắt', '剪', 'cách', '方法'],
+                ['mặc', '穿', 'mặt', '脸'],
+                ['quen', '熟悉', 'quên', '忘记'],
+                ['hết', '完', 'hếch', '翘起'],
+                ['xem', '看', 'xếm', '靠近']
+            ]
+        };
+
+        // ============================================================
+        // 2. 辅音映射表
+        // ============================================================
+        const CONSONANT_MAP = {
+            'b': { display: 'bờ', ipa: 'bờ' },
+            'p': { display: 'pờ', ipa: 'pờ' },
+            'm': { display: 'mờ', ipa: 'mờ' },
+            'n': { display: 'nờ', ipa: 'nờ' },
+            't': { display: 'tờ', ipa: 'tờ' },
+            'đ': { display: 'đờ', ipa: 'đờ' },
+            'd': { display: 'dờ', ipa: 'dờ' },
+            'v': { display: 'vờ', ipa: 'vờ' },
+            'h': { display: 'hờ', ipa: 'hờ' },
+            'qu': { display: 'quờ', ipa: 'quờ' },
+            'l': { display: 'lờ', ipa: 'lờ' },
+            's': { display: 'sờ', ipa: 'sờ' },
+            'x': { display: 'xờ', ipa: 'xờ' },
+            'r': { display: 'rờ', ipa: 'rờ' },
+            'c': { display: 'cờ', ipa: 'cờ' },
+            'k': { display: 'cờ', ipa: 'cờ' },
+            'g': { display: 'gờ', ipa: 'gờ' },
+            'th': { display: 'thờ', ipa: 'thờ' },
+            'ng': { display: 'ngờ', ipa: 'ngờ' },
+            'ngh': { display: 'nghờ', ipa: 'nghờ' },
+            'nh': { display: 'nhờ', ipa: 'nhờ' },
+            'ph': { display: 'phờ', ipa: 'phờ' },
+            'kh': { display: 'khờ', ipa: 'khờ' },
+            'gh': { display: 'ghờ', ipa: 'ghờ' },
+            'ch': { display: 'chờ', ipa: 'chờ' },
+            'tr': { display: 'trờ', ipa: 'trờ' },
+            'gi': { display: 'giờ', ipa: 'giờ' }
+        };
+
+        const CONSONANT_SPELLING_NAME = {};
+        for (const [key, val] of Object.entries(CONSONANT_MAP)) {
+            CONSONANT_SPELLING_NAME[key] = val.display;
+        }
+
+        const CONSONANT_DISPLAY_NAME = {};
+        for (const [key, val] of Object.entries(CONSONANT_MAP)) {
+            CONSONANT_DISPLAY_NAME[key] = val.display;
+        }
+
+        // ============================================================
+        // 3. 拼读引擎
+        // ============================================================
+        class SpellingEngine {
+            constructor() {
+                this.letterNames = {
+                    ...CONSONANT_SPELLING_NAME,
+                    'a': 'a', 'ă': 'ă', 'â': 'â', 'e': 'e', 'ê': 'ê',
+                    'i': 'i', 'y': 'y', 'o': 'o', 'ô': 'ô', 'ơ': 'ơ',
+                    'u': 'u', 'ư': 'ư',
+                    'm': 'mờ', 'p': 'pờ', 'n': 'nờ', 't': 'tờ',
+                    'nh': 'nhờ', 'ch': 'chờ', 'ng': 'ngờ', 'c': 'cờ'
+                };
+                this.toneMap = {
+                    'á': 'a', 'à': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a',
+                    'ắ': 'ă', 'ằ': 'ă', 'ẳ': 'ă', 'ẵ': 'ă', 'ặ': 'ă',
+                    'ấ': 'â', 'ầ': 'â', 'ẩ': 'â', 'ẫ': 'â', 'ậ': 'â',
+                    'é': 'e', 'è': 'e', 'ẻ': 'e', 'ẽ': 'e', 'ẹ': 'e',
+                    'ế': 'ê', 'ề': 'ê', 'ể': 'ê', 'ễ': 'ê', 'ệ': 'ê',
+                    'í': 'i', 'ì': 'i', 'ỉ': 'i', 'ĩ': 'i', 'ị': 'i',
+                    'ó': 'o', 'ò': 'o', 'ỏ': 'o', 'õ': 'o', 'ọ': 'o',
+                    'ố': 'ô', 'ồ': 'ô', 'ổ': 'ô', 'ỗ': 'ô', 'ộ': 'ô',
+                    'ớ': 'ơ', 'ờ': 'ơ', 'ở': 'ơ', 'ỡ': 'ơ', 'ợ': 'ơ',
+                    'ú': 'u', 'ù': 'u', 'ủ': 'u', 'ũ': 'u', 'ụ': 'u',
+                    'ứ': 'ư', 'ừ': 'ư', 'ử': 'ư', 'ữ': 'ư', 'ự': 'ư',
+                    'ý': 'y', 'ỳ': 'y', 'ỷ': 'y', 'ỹ': 'y', 'ỵ': 'y'
+                };
+                this.toneNames = {
+                    '': '平声', 'á': '锐声', 'à': '玄声', 'ả': '问声',
+                    'ã': '跌声', 'ạ': '重声', 'ắ': '锐声', 'ằ': '玄声',
+                    'ẳ': '问声', 'ẵ': '跌声', 'ặ': '重声', 'ấ': '锐声',
+                    'ầ': '玄声', 'ẩ': '问声', 'ẫ': '跌声', 'ậ': '重声',
+                    'é': '锐声', 'è': '玄声', 'ẻ': '问声', 'ẽ': '跌声',
+                    'ẹ': '重声', 'ế': '锐声', 'ề': '玄声', 'ể': '问声',
+                    'ễ': '跌声', 'ệ': '重声', 'í': '锐声', 'ì': '玄声',
+                    'ỉ': '问声', 'ĩ': '跌声', 'ị': '重声', 'ó': '锐声',
+                    'ò': '玄声', 'ỏ': '问声', 'õ': '跌声', 'ọ': '重声',
+                    'ố': '锐声', 'ồ': '玄声', 'ổ': '问声', 'ỗ': '跌声',
+                    'ộ': '重声', 'ớ': '锐声', 'ờ': '玄声', 'ở': '问声',
+                    'ỡ': '跌声', 'ợ': '重声', 'ú': '锐声', 'ù': '玄声',
+                    'ủ': '问声', 'ũ': '跌声', 'ụ': '重声', 'ứ': '锐声',
+                    'ừ': '玄声', 'ử': '问声', 'ữ': '跌声', 'ự': '重声',
+                    'ý': '锐声', 'ỳ': '玄声', 'ỷ': '问声', 'ỹ': '跌声',
+                    'ỵ': '重声'
+                };
+                this.compoundConsonants = ['ngh', 'ng', 'nh', 'th', 'ph', 'kh', 'gh', 'ch', 'tr', 'gi', 'qu'];
+                this.singleConsonants = ['p', 'b', 'm', 'n', 't', 'đ', 'l', 'v', 'h', 's', 'x', 'r', 'c', 'k', 'g', 'd', 'q'];
+                this.vowelList = ['ươi', 'ươ', 'uô', 'iê', 'ia', 'ưa', 'ua', 'i', 'y', 'u', 'ư', 'a', 'ă', 'â', 'e', 'ê', 'o', 'ô', 'ơ'];
+            }
+
+            parse(syllable) {
+                let plain = syllable;
+                let toneChar = '';
+                for (let i = syllable.length - 1; i >= 0; i--) {
+                    const ch = syllable[i];
+                    if (this.toneMap[ch]) {
+                        toneChar = ch;
+                        plain = syllable.slice(0, i) + this.toneMap[ch] + syllable.slice(i + 1);
+                        break;
+                    }
+                }
+                let consonant = '';
+                let remaining = plain;
+                for (const cc of this.compoundConsonants) {
+                    if (plain.startsWith(cc)) {
+                        consonant = cc;
+                        remaining = plain.slice(cc.length);
+                        break;
+                    }
+                }
+                if (!consonant) {
+                    for (const sc of this.singleConsonants) {
+                        if (plain.startsWith(sc)) {
+                            consonant = sc;
+                            remaining = plain.slice(sc.length);
+                            break;
+                        }
+                    }
+                }
+                let vowel = '';
+                let final = '';
+                for (const v of this.vowelList) {
+                    if (remaining.startsWith(v)) {
+                        vowel = v;
+                        final = remaining.slice(v.length);
+                        break;
+                    }
+                }
+                if (!vowel && remaining.length > 0) {
+                    for (const v of this.vowelList) {
+                        if (plain.startsWith(v)) {
+                            vowel = v;
+                            final = plain.slice(v.length);
+                            consonant = '';
+                            remaining = plain;
+                            break;
+                        }
+                    }
+                }
+                const consonantName = this.letterNames[consonant] || consonant;
+                const vowelName = this.letterNames[vowel] || vowel;
+                const finalName = this.letterNames[final] || final;
+                let spellingParts = [];
+                if (consonant) spellingParts.push(consonantName);
+                if (vowel) spellingParts.push(vowelName);
+                if (final) spellingParts.push(finalName);
+                spellingParts.push(syllable);
+                const spelling = spellingParts.join(' ... ');
+                const toneName = this.toneNames[toneChar] || '平声';
+                return {
+                    original: syllable,
+                    plain: plain,
+                    consonant: consonant,
+                    vowel: vowel,
+                    final: final,
+                    toneChar: toneChar,
+                    toneName: toneName,
+                    spelling: spelling,
+                    consonantName: consonantName,
+                    vowelName: vowelName,
+                    finalName: finalName
+                };
+            }
+
+            getSpellingText(syllable, separator = ' ... ') {
+                const parsed = this.parse(syllable);
+                const parts = [];
+                if (parsed.consonant) parts.push(parsed.consonantName);
+                if (parsed.vowel) parts.push(parsed.vowelName);
+                if (parsed.final) parts.push(parsed.finalName);
+                parts.push(syllable);
+                return parts.join(separator);
+            }
+        }
+
+        // ============================================================
+        // 4. ⭐ 离线音频播放器 (硬编码映射表)
+        // ============================================================
+        class OfflineAudioPlayer {
+            constructor() {
+                this.audioCache = new Map();
+                // ⭐ 直接从您提供的 audio_mapping.json 硬编码
+                this.audioMapping = {
+                    "a": "0000_a.mp3",
+                    "ac": "0001_ac.mp3",
+                    "ach": "0002_ach.mp3",
+                    "am": "0003_am.mp3",
+                    "an": "0004_an.mp3",
+                    "ang": "0005_ang.mp3",
+                    "anh": "0006_anh.mp3",
+                    "ap": "0007_ap.mp3",
+                    "at": "0008_at.mp3",
+                    "ba": "0009_ba.mp3",
+                    "be": "0010_be.mp3",
+                    "bi": "0011_bi.mp3",
+                    "bo": "0012_bo.mp3",
+                    "bu": "0013_bu.mp3",
+                    "bà": "0014_bà.mp3",
+                    "bàn": "0015_bàn.mp3",
+                    "bá": "0016_bá.mp3",
+                    "bã": "0017_bã.mp3",
+                    "bê": "0018_bê.mp3",
+                    "bô": "0019_bô.mp3",
+                    "bơ": "0020_bơ.mp3",
+                    "bư": "0021_bư.mp3",
+                    "bạ": "0022_bạ.mp3",
+                    "bạn": "0023_bạn.mp3",
+                    "bả": "0024_bả.mp3",
+                    "bờ": "0025_bờ.mp3",
+                    "bờ a ba": "0026_bờ a ba.mp3",
+                    "bờ e be": "0027_bờ e be.mp3",
+                    "ca": "0028_ca.mp3",
+                    "cha": "0029_cha.mp3",
+                    "che": "0030_che.mp3",
+                    "chi": "0031_chi.mp3",
+                    "cho": "0032_cho.mp3",
+                    "chu": "0033_chu.mp3",
+                    "chê": "0034_chê.mp3",
+                    "chô": "0035_chô.mp3",
+                    "chơ": "0036_chơ.mp3",
+                    "chư": "0037_chư.mp3",
+                    "chờ": "0038_chờ.mp3",
+                    "chờ a cha": "0039_chờ a cha.mp3",
+                    "co": "0040_co.mp3",
+                    "cu": "0041_cu.mp3",
+                    "các": "0042_các.mp3",
+                    "cách": "0043_cách.mp3",
+                    "cát": "0044_cát.mp3",
+                    "cô": "0045_cô.mp3",
+                    "cơ": "0046_cơ.mp3",
+                    "cư": "0047_cư.mp3",
+                    "cắt": "0048_cắt.mp3",
+                    "cờ": "0049_cờ.mp3",
+                    "da": "0050_da.mp3",
+                    "de": "0051_de.mp3",
+                    "di": "0052_di.mp3",
+                    "do": "0053_do.mp3",
+                    "du": "0054_du.mp3",
+                    "dê": "0055_dê.mp3",
+                    "dô": "0056_dô.mp3",
+                    "dơ": "0057_dơ.mp3",
+                    "dư": "0058_dư.mp3",
+                    "dờ": "0059_dờ.mp3",
+                    "e": "0060_e.mp3",
+                    "ec": "0061_ec.mp3",
+                    "em": "0062_em.mp3",
+                    "en": "0063_en.mp3",
+                    "eng": "0064_eng.mp3",
+                    "ep": "0065_ep.mp3",
+                    "et": "0066_et.mp3",
+                    "ga": "0067_ga.mp3",
+                    "ghe": "0068_ghe.mp3",
+                    "ghi": "0069_ghi.mp3",
+                    "ghê": "0070_ghê.mp3",
+                    "ghờ": "0071_ghờ.mp3",
+                    "gi": "0072_gi.mp3",
+                    "gia": "0073_gia.mp3",
+                    "gie": "0074_gie.mp3",
+                    "gio": "0075_gio.mp3",
+                    "giu": "0076_giu.mp3",
+                    "giê": "0077_giê.mp3",
+                    "giô": "0078_giô.mp3",
+                    "giơ": "0079_giơ.mp3",
+                    "giư": "0080_giư.mp3",
+                    "giờ": "0081_giờ.mp3",
+                    "go": "0082_go.mp3",
+                    "gu": "0083_gu.mp3",
+                    "gô": "0084_gô.mp3",
+                    "gơ": "0085_gơ.mp3",
+                    "gư": "0086_gư.mp3",
+                    "gờ": "0087_gờ.mp3",
+                    "ha": "0088_ha.mp3",
+                    "he": "0089_he.mp3",
+                    "hi": "0090_hi.mp3",
+                    "ho": "0091_ho.mp3",
+                    "hu": "0092_hu.mp3",
+                    "hy": "0093_hy.mp3",
+                    "hách": "0094_hách.mp3",
+                    "hát": "0095_hát.mp3",
+                    "hê": "0096_hê.mp3",
+                    "hô": "0097_hô.mp3",
+                    "hơ": "0098_hơ.mp3",
+                    "hư": "0099_hư.mp3",
+                    "hắt": "0100_hắt.mp3",
+                    "hẹn": "0101_hẹn.mp3",
+                    "hẹt": "0102_hẹt.mp3",
+                    "hếch": "0103_hếch.mp3",
+                    "hết": "0104_hết.mp3",
+                    "hờ": "0105_hờ.mp3",
+                    "i": "0106_i.mp3",
+                    "ich": "0107_ich.mp3",
+                    "im": "0108_im.mp3",
+                    "in": "0109_in.mp3",
+                    "inh": "0110_inh.mp3",
+                    "ip": "0111_ip.mp3",
+                    "it": "0112_it.mp3",
+                    "ke": "0113_ke.mp3",
+                    "kha": "0114_kha.mp3",
+                    "khe": "0115_khe.mp3",
+                    "khi": "0116_khi.mp3",
+                    "kho": "0117_kho.mp3",
+                    "khu": "0118_khu.mp3",
+                    "khê": "0119_khê.mp3",
+                    "khô": "0120_khô.mp3",
+                    "khơ": "0121_khơ.mp3",
+                    "khư": "0122_khư.mp3",
+                    "khờ": "0123_khờ.mp3",
+                    "khờ a kha": "0124_khờ a kha.mp3",
+                    "ki": "0125_ki.mp3",
+                    "ky": "0126_ky.mp3",
+                    "kê": "0127_kê.mp3",
+                    "kẹt": "0128_kẹt.mp3",
+                    "kết": "0129_kết.mp3",
+                    "la": "0130_la.mp3",
+                    "lanh": "0131_lanh.mp3",
+                    "le": "0132_le.mp3",
+                    "li": "0133_li.mp3",
+                    "lo": "0134_lo.mp3",
+                    "lu": "0135_lu.mp3",
+                    "ly": "0136_ly.mp3",
+                    "lê": "0137_lê.mp3",
+                    "lô": "0138_lô.mp3",
+                    "lơ": "0139_lơ.mp3",
+                    "lư": "0140_lư.mp3",
+                    "lạch": "0141_lạch.mp3",
+                    "lờ": "0142_lờ.mp3",
+                    "lờ a la": "0143_lờ a la.mp3",
+                    "ma": "0144_ma.mp3",
+                    "me": "0145_me.mp3",
+                    "mi": "0146_mi.mp3",
+                    "mo": "0147_mo.mp3",
+                    "mu": "0148_mu.mp3",
+                    "my": "0149_my.mp3",
+                    "mê": "0150_mê.mp3",
+                    "mò": "0151_mò.mp3",
+                    "mó": "0152_mó.mp3",
+                    "mô": "0153_mô.mp3",
+                    "mõ": "0154_mõ.mp3",
+                    "mơ": "0155_mơ.mp3",
+                    "mư": "0156_mư.mp3",
+                    "mặc": "0157_mặc.mp3",
+                    "mặt": "0158_mặt.mp3",
+                    "mọ": "0159_mọ.mp3",
+                    "mỏ": "0160_mỏ.mp3",
+                    "mờ": "0161_mờ.mp3",
+                    "mờ a ma": "0162_mờ a ma.mp3",
+                    "mờ e me": "0163_mờ e me.mp3",
+                    "na": "0164_na.mp3",
+                    "ne": "0165_ne.mp3",
+                    "nga": "0166_nga.mp3",
+                    "nge": "0167_nge.mp3",
+                    "ngha": "0168_ngha.mp3",
+                    "nghe": "0169_nghe.mp3",
+                    "nghi": "0170_nghi.mp3",
+                    "ngho": "0171_ngho.mp3",
+                    "nghu": "0172_nghu.mp3",
+                    "nghê": "0173_nghê.mp3",
+                    "nghô": "0174_nghô.mp3",
+                    "nghơ": "0175_nghơ.mp3",
+                    "nghư": "0176_nghư.mp3",
+                    "nghờ": "0177_nghờ.mp3",
+                    "ngi": "0178_ngi.mp3",
+                    "ngo": "0179_ngo.mp3",
+                    "ngu": "0180_ngu.mp3",
+                    "ngê": "0181_ngê.mp3",
+                    "ngô": "0182_ngô.mp3",
+                    "ngù": "0183_ngù.mp3",
+                    "ngú": "0184_ngú.mp3",
+                    "ngũ": "0185_ngũ.mp3",
+                    "ngơ": "0186_ngơ.mp3",
+                    "ngư": "0187_ngư.mp3",
+                    "ngờ": "0188_ngờ.mp3",
+                    "ngụ": "0189_ngụ.mp3",
+                    "ngủ": "0190_ngủ.mp3",
+                    "nha": "0191_nha.mp3",
+                    "nhanh": "0192_nhanh.mp3",
+                    "nhe": "0193_nhe.mp3",
+                    "nhi": "0194_nhi.mp3",
+                    "nho": "0195_nho.mp3",
+                    "nhu": "0196_nhu.mp3",
+                    "nhê": "0197_nhê.mp3",
+                    "nhênh": "0198_nhênh.mp3",
+                    "nhò": "0199_nhò.mp3",
+                    "nhó": "0200_nhó.mp3",
+                    "nhô": "0201_nhô.mp3",
+                    "nhõ": "0202_nhõ.mp3",
+                    "nhơ": "0203_nhơ.mp3",
+                    "như": "0204_như.mp3",
+                    "nhọ": "0205_nhọ.mp3",
+                    "nhỏ": "0206_nhỏ.mp3",
+                    "nhố": "0207_nhố.mp3",
+                    "nhờ": "0208_nhờ.mp3",
+                    "nhờ a nha": "0209_nhờ a nha.mp3",
+                    "ni": "0210_ni.mp3",
+                    "no": "0211_no.mp3",
+                    "nu": "0212_nu.mp3",
+                    "nê": "0213_nê.mp3",
+                    "nò": "0214_nò.mp3",
+                    "nó": "0215_nó.mp3",
+                    "nô": "0216_nô.mp3",
+                    "nõ": "0217_nõ.mp3",
+                    "nơ": "0218_nơ.mp3",
+                    "nư": "0219_nư.mp3",
+                    "nọ": "0220_nọ.mp3",
+                    "nỏ": "0221_nỏ.mp3",
+                    "nố": "0222_nố.mp3",
+                    "nờ": "0223_nờ.mp3",
+                    "nờ a na": "0224_nờ a na.mp3",
+                    "nờ e ne": "0225_nờ e ne.mp3",
+                    "o": "0226_o.mp3",
+                    "oc": "0227_oc.mp3",
+                    "och": "0228_och.mp3",
+                    "om": "0229_om.mp3",
+                    "on": "0230_on.mp3",
+                    "ong": "0231_ong.mp3",
+                    "onh": "0232_onh.mp3",
+                    "op": "0233_op.mp3",
+                    "ot": "0234_ot.mp3",
+                    "pa": "0235_pa.mp3",
+                    "pe": "0236_pe.mp3",
+                    "pha": "0237_pha.mp3",
+                    "phe": "0238_phe.mp3",
+                    "phi": "0239_phi.mp3",
+                    "pho": "0240_pho.mp3",
+                    "phu": "0241_phu.mp3",
+                    "phê": "0242_phê.mp3",
+                    "phô": "0243_phô.mp3",
+                    "phơ": "0244_phơ.mp3",
+                    "phư": "0245_phư.mp3",
+                    "phờ": "0246_phờ.mp3",
+                    "phờ a pha": "0247_phờ a pha.mp3",
+                    "pi": "0248_pi.mp3",
+                    "po": "0249_po.mp3",
+                    "pu": "0250_pu.mp3",
+                    "pè": "0251_pè.mp3",
+                    "pé": "0252_pé.mp3",
+                    "pê": "0253_pê.mp3",
+                    "pô": "0254_pô.mp3",
+                    "pơ": "0255_pơ.mp3",
+                    "pư": "0256_pư.mp3",
+                    "pẹ": "0257_pẹ.mp3",
+                    "pẻ": "0258_pẻ.mp3",
+                    "pẽ": "0259_pẽ.mp3",
+                    "pờ": "0260_pờ.mp3",
+                    "pờ a pa": "0261_pờ a pa.mp3",
+                    "qua": "0262_qua.mp3",
+                    "que": "0263_que.mp3",
+                    "quen": "0264_quen.mp3",
+                    "qui": "0265_qui.mp3",
+                    "quy": "0266_quy.mp3",
+                    "quê": "0267_quê.mp3",
+                    "quên": "0268_quên.mp3",
+                    "quờ": "0269_quờ.mp3",
+                    "ra": "0270_ra.mp3",
+                    "re": "0271_re.mp3",
+                    "ri": "0272_ri.mp3",
+                    "ro": "0273_ro.mp3",
+                    "ru": "0274_ru.mp3",
+                    "rê": "0275_rê.mp3",
+                    "rô": "0276_rô.mp3",
+                    "rơ": "0277_rơ.mp3",
+                    "rư": "0278_rư.mp3",
+                    "rờ": "0279_rờ.mp3",
+                    "sa": "0280_sa.mp3",
+                    "se": "0281_se.mp3",
+                    "si": "0282_si.mp3",
+                    "so": "0283_so.mp3",
+                    "su": "0284_su.mp3",
+                    "sê": "0285_sê.mp3",
+                    "sô": "0286_sô.mp3",
+                    "sơ": "0287_sơ.mp3",
+                    "sư": "0288_sư.mp3",
+                    "sờ": "0289_sờ.mp3",
+                    "ta": "0290_ta.mp3",
+                    "te": "0291_te.mp3",
+                    "tha": "0292_tha.mp3",
+                    "the": "0293_the.mp3",
+                    "thi": "0294_thi.mp3",
+                    "tho": "0295_tho.mp3",
+                    "thu": "0296_thu.mp3",
+                    "thê": "0297_thê.mp3",
+                    "thô": "0298_thô.mp3",
+                    "thơ": "0299_thơ.mp3",
+                    "thư": "0300_thư.mp3",
+                    "thờ": "0301_thờ.mp3",
+                    "thờ a tha": "0302_thờ a tha.mp3",
+                    "ti": "0303_ti.mp3",
+                    "to": "0304_to.mp3",
+                    "tra": "0305_tra.mp3",
+                    "tre": "0306_tre.mp3",
+                    "tri": "0307_tri.mp3",
+                    "tro": "0308_tro.mp3",
+                    "tru": "0309_tru.mp3",
+                    "trê": "0310_trê.mp3",
+                    "trô": "0311_trô.mp3",
+                    "trơ": "0312_trơ.mp3",
+                    "trư": "0313_trư.mp3",
+                    "trờ": "0314_trờ.mp3",
+                    "trờ a tra": "0315_trờ a tra.mp3",
+                    "tu": "0316_tu.mp3",
+                    "ty": "0317_ty.mp3",
+                    "tác": "0318_tác.mp3",
+                    "tám": "0319_tám.mp3",
+                    "táp": "0320_táp.mp3",
+                    "tê": "0321_tê.mp3",
+                    "tô": "0322_tô.mp3",
+                    "tăm": "0323_tăm.mp3",
+                    "tơ": "0324_tơ.mp3",
+                    "tư": "0325_tư.mp3",
+                    "tập": "0326_tập.mp3",
+                    "tắc": "0327_tắc.mp3",
+                    "tờ": "0328_tờ.mp3",
+                    "tờ a ta": "0329_tờ a ta.mp3",
+                    "u": "0330_u.mp3",
+                    "uc": "0331_uc.mp3",
+                    "uch": "0332_uch.mp3",
+                    "um": "0333_um.mp3",
+                    "un": "0334_un.mp3",
+                    "ung": "0335_ung.mp3",
+                    "unh": "0336_unh.mp3",
+                    "up": "0337_up.mp3",
+                    "ut": "0338_ut.mp3",
+                    "va": "0339_va.mp3",
+                    "ve": "0340_ve.mp3",
+                    "vi": "0341_vi.mp3",
+                    "vo": "0342_vo.mp3",
+                    "vu": "0343_vu.mp3",
+                    "vê": "0344_vê.mp3",
+                    "vô": "0345_vô.mp3",
+                    "vơ": "0346_vơ.mp3",
+                    "vư": "0347_vư.mp3",
+                    "vờ": "0348_vờ.mp3",
+                    "xa": "0349_xa.mp3",
+                    "xe": "0350_xe.mp3",
+                    "xem": "0351_xem.mp3",
+                    "xi": "0352_xi.mp3",
+                    "xo": "0353_xo.mp3",
+                    "xu": "0354_xu.mp3",
+                    "xê": "0355_xê.mp3",
+                    "xô": "0356_xô.mp3",
+                    "xơ": "0357_xơ.mp3",
+                    "xư": "0358_xư.mp3",
+                    "xếm": "0359_xếm.mp3",
+                    "xờ": "0360_xờ.mp3",
+                    "y": "0361_y.mp3",
+                    "â": "0362_â.mp3",
+                    "âc": "0363_âc.mp3",
+                    "âm": "0364_âm.mp3",
+                    "ân": "0365_ân.mp3",
+                    "âng": "0366_âng.mp3",
+                    "âp": "0367_âp.mp3",
+                    "ât": "0368_ât.mp3",
+                    "ê": "0369_ê.mp3",
+                    "êch": "0370_êch.mp3",
+                    "êm": "0371_êm.mp3",
+                    "ên": "0372_ên.mp3",
+                    "ênh": "0373_ênh.mp3",
+                    "êp": "0374_êp.mp3",
+                    "êt": "0375_êt.mp3",
+                    "ô": "0376_ô.mp3",
+                    "ôc": "0377_ôc.mp3",
+                    "ôch": "0378_ôch.mp3",
+                    "ôm": "0379_ôm.mp3",
+                    "ôn": "0380_ôn.mp3",
+                    "ông": "0381_ông.mp3",
+                    "ônh": "0382_ônh.mp3",
+                    "ôp": "0383_ôp.mp3",
+                    "ôt": "0384_ôt.mp3",
+                    "ă": "0385_ă.mp3",
+                    "ăc": "0386_ăc.mp3",
+                    "ăm": "0387_ăm.mp3",
+                    "ăn": "0388_ăn.mp3",
+                    "ăng": "0389_ăng.mp3",
+                    "ăp": "0390_ăp.mp3",
+                    "ăt": "0391_ăt.mp3",
+                    "đa": "0392_đa.mp3",
+                    "đe": "0393_đe.mp3",
+                    "đi": "0394_đi.mp3",
+                    "đo": "0395_đo.mp3",
+                    "đu": "0396_đu.mp3",
+                    "đê": "0397_đê.mp3",
+                    "đô": "0398_đô.mp3",
+                    "đơ": "0399_đơ.mp3",
+                    "đư": "0400_đư.mp3",
+                    "đờ": "0401_đờ.mp3",
+                    "đờ a đa": "0402_đờ a đa.mp3",
+                    "ơ": "0403_ơ.mp3",
+                    "ơc": "0404_ơc.mp3",
+                    "ơm": "0405_ơm.mp3",
+                    "ơn": "0406_ơn.mp3",
+                    "ơng": "0407_ơng.mp3",
+                    "ơp": "0408_ơp.mp3",
+                    "ơt": "0409_ơt.mp3",
+                    "ư": "0410_ư.mp3",
+                    "ưc": "0411_ưc.mp3",
+                    "ưch": "0412_ưch.mp3",
+                    "ưm": "0413_ưm.mp3",
+                    "ưn": "0414_ưn.mp3",
+                    "ưng": "0415_ưng.mp3",
+                    "ưnh": "0416_ưnh.mp3",
+                    "ưp": "0417_ưp.mp3",
+                    "ưt": "0418_ưt.mp3"
+                };
+                this.isReady = true;
+                document.getElementById('statusText').textContent =
+                    `✅ 已加载 ${Object.keys(this.audioMapping).length} 个离线音频`;
+                console.log('📦 离线音频映射表已硬编码加载');
+            }
+
+            speak(text, lang = 'vi') {
+                if (!text || text.trim() === '') return;
+                const key = text.trim();
+
+                if (this.audioMapping[key]) {
+                    return this._playFile(`audio/${this.audioMapping[key]}`);
+                }
+
+                const plain = key.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                if (this.audioMapping[plain]) {
+                    return this._playFile(`audio/${this.audioMapping[plain]}`);
+                }
+
+                return this._fallbackTTS(key);
+            }
+
+            _playFile(url) {
+                if (this.audioCache.has(url)) {
+                    const audio = this.audioCache.get(url);
+                    audio.currentTime = 0;
+                    audio.play().catch(() => this._fallbackTTS(url));
+                    return true;
+                }
+
+                const audio = new Audio(url);
+                audio.oncanplaythrough = () => {
+                    this.audioCache.set(url, audio);
+                    audio.play().catch(() => this._fallbackTTS(url));
+                };
+                audio.onerror = () => {
+                    console.warn('离线音频加载失败:', url);
+                    this._fallbackTTS(url);
+                };
+                audio.load();
+                return true;
+            }
+
+            _fallbackTTS(text) {
+                if (!window.speechSynthesis) {
+                    console.warn('浏览器不支持TTS');
+                    return false;
+                }
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'vi-VN';
+                utterance.rate = 0.85;
+                utterance.pitch = 1;
+                utterance.volume = 1;
+                window.speechSynthesis.speak(utterance);
+                return true;
+            }
+
+            speakSpelling(syllable, engine) {
+                const spellingText = engine.getSpellingText(syllable);
+                this.speak(spellingText);
+                return true;
+            }
+        }
+
+        // ============================================================
+        // 5. 主应用
+        // ============================================================
+        class App {
+            constructor() {
+                this.engine = new SpellingEngine();
+                this.tts = new OfflineAudioPlayer();
+                this.favorites = JSON.parse(localStorage.getItem('viet_spelling_fav') || '[]');
+
+                this.resultWord = document.getElementById('resultWord');
+                this.resultSpelling = document.getElementById('resultSpelling');
+                this.resultDetail = document.getElementById('resultDetail');
+                this.searchInput = document.getElementById('searchInput');
+                this.searchBtn = document.getElementById('searchBtn');
+                this.randomBtn = document.getElementById('randomBtn');
+                this.playBtn = document.getElementById('playBtn');
+
+                this.currentSyllable = 'ba';
+
+                this.init();
+            }
+
+            init() {
+                this.searchBtn.addEventListener('click', () => this.handleSearch());
+                this.searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') this.handleSearch();
+                });
+                this.randomBtn.addEventListener('click', () => this.handleRandom());
+                this.playBtn.addEventListener('click', () => this.playCurrent());
+
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                        btn.classList.add('active');
+                        document.getElementById(btn.dataset.tab).classList.add('active');
+                    });
+                });
+
+                document.getElementById('clearFavBtn').addEventListener('click', () => {
+                    if (confirm('确定清空所有收藏吗？')) {
+                        this.favorites = [];
+                        this.saveFavorites();
+                        this.renderFavorites();
+                        this.showToast('已清空收藏');
+                    }
+                });
+
+                this.renderVowels();
+                this.renderConsonants();
+                this.renderCVGrid();
+                this.renderToneGrid();
+                this.renderFinalGrid();
+                this.renderMinimalPairs();
+                this.renderFavorites();
+
+                this.showResult('ba');
+            }
+
+            renderVowels() {
+                const container = document.getElementById('vowelGrid');
+                let html = '';
+                DATA.vowels.forEach(v => {
+                    html += `<div class="phoneme-chip" data-text="${v}">${v}</div>`;
+                });
+                container.innerHTML = html;
+                container.querySelectorAll('.phoneme-chip').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const text = el.dataset.text;
+                        this.tts.speak(text);
+                        this.showToast(`🔊 ${text}`);
+                    });
+                });
+            }
+
+            renderConsonants() {
+                const container = document.getElementById('consonantGrid');
+                let html = '';
+                DATA.consonants.forEach(c => {
+                    const info = CONSONANT_MAP[c];
+                    if (!info) return;
+                    const displayName = info.display;
+                    const ipa = info.ipa;
+                    html += `<div class="phoneme-chip" data-text="${c}" data-ipa="${ipa}">
+                                ${c}
+                                <span class="sub">${displayName}</span>
+                                <span class="ipa-badge">${ipa}</span>
+                            </div>`;
+                });
+                container.innerHTML = html;
+                container.querySelectorAll('.phoneme-chip').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const text = el.dataset.text;
+                        const ipa = el.dataset.ipa;
+                        this.tts.speak(ipa);
+                        this.showToast(`🔊 ${text} → ${ipa}`);
+                    });
+                });
+            }
+
+            handleSearch() {
+                const text = this.searchInput.value.trim();
+                if (!text) { this.showToast('请输入越南语音节'); return; }
+                this.showResult(text);
+            }
+
+            handleRandom() {
+                const allSyllables = this.getAllSyllables();
+                if (allSyllables.length === 0) return;
+                const random = allSyllables[Math.floor(Math.random() * allSyllables.length)];
+                this.searchInput.value = random;
+                this.showResult(random);
+            }
+
+            getAllSyllables() {
+                const set = new Set();
+                Object.values(DATA.cvTable).forEach(arr => arr.forEach(s => set.add(s)));
+                Object.values(DATA.toneWords).forEach(arr => arr.forEach(s => set.add(s)));
+                Object.values(DATA.finalTable).forEach(arr => arr.forEach(s => set.add(s)));
+                DATA.vowels.forEach(v => set.add(v));
+                DATA.consonants.forEach(c => set.add(c));
+                return Array.from(set);
+            }
+
+            showResult(syllable) {
+                this.currentSyllable = syllable;
+                const parsed = this.engine.parse(syllable);
+
+                this.resultWord.textContent = parsed.original;
+                this.resultSpelling.textContent = parsed.spelling;
+
+                let detail = `辅音: ${parsed.consonant || '无'} | 元音: ${parsed.vowel || '无'}`;
+                if (parsed.final) detail += ` | 后辅音: ${parsed.final}`;
+                detail += ` | 声调: ${parsed.toneName}`;
+                this.resultDetail.textContent = detail;
+
+                this.playCurrent();
+            }
+
+            playCurrent() {
+                const text = this.currentSyllable;
+                this.tts.speakSpelling(text, this.engine);
+                this.playBtn.textContent = '🔊 播放中...';
+                this.playBtn.disabled = true;
+                setTimeout(() => {
+                    this.playBtn.textContent = '🔊 播放拼读';
+                    this.playBtn.disabled = false;
+                }, 2000);
+            }
+
+            toggleFavorite(syllable) {
+                const idx = this.favorites.indexOf(syllable);
+                if (idx > -1) { this.favorites.splice(idx, 1); } else { this.favorites.push(syllable); }
+                this.saveFavorites();
+                this.renderFavorites();
+                this.renderCVGrid();
+                this.renderToneGrid();
+                this.renderFinalGrid();
+                this.renderMinimalPairs();
+                this.showToast(idx > -1 ? `已移除 ${syllable}` : `已收藏 ${syllable}`);
+            }
+
+            isFavorite(syllable) { return this.favorites.includes(syllable); }
+
+            saveFavorites() { localStorage.setItem('viet_spelling_fav', JSON.stringify(this.favorites)); }
+
+            showToast(msg) {
+                const el = document.getElementById('toast');
+                el.textContent = msg;
+                el.classList.add('show');
+                clearTimeout(this.toastTimer);
+                this.toastTimer = setTimeout(() => el.classList.remove('show'), 1500);
+            }
+
+            renderCVGrid() {
+                const container = document.getElementById('cvGrid');
+                let html = '';
+                for (const [consonant, syllables] of Object.entries(DATA.cvTable)) {
+                    html += `<div style="grid-column:1/-1; font-weight:600; color:#1a73e8; font-size:13px; padding:4px 0;">${consonant}</div>`;
+                    syllables.forEach(s => {
+                        const fav = this.isFavorite(s) ? '⭐' : '☆';
+                        html += `<div class="syllable-chip" data-syllable="${s}">${s}<span class="fav-btn" data-syllable="${s}">${fav}</span></div>`;
+                    });
+                }
+                container.innerHTML = html;
+                this.bindChipEvents(container);
+            }
+
+            renderToneGrid() {
+                const container = document.getElementById('toneGrid');
+                let html = '';
+                for (const [base, tones] of Object.entries(DATA.toneWords)) {
+                    html += `<div style="grid-column:1/-1; font-weight:500; color:#64748b; font-size:13px; padding:4px 0;">${base}</div>`;
+                    tones.forEach(s => {
+                        const fav = this.isFavorite(s) ? '⭐' : '☆';
+                        html += `<div class="syllable-chip" data-syllable="${s}">${s}<span class="fav-btn" data-syllable="${s}">${fav}</span></div>`;
+                    });
+                }
+                container.innerHTML = html;
+                this.bindChipEvents(container);
+            }
+
+            renderFinalGrid() {
+                const container = document.getElementById('finalGrid');
+                let html = '';
+                for (const [vowel, finals] of Object.entries(DATA.finalTable)) {
+                    html += `<div style="grid-column:1/-1; font-weight:500; color:#64748b; font-size:13px; padding:4px 0;">${vowel}</div>`;
+                    finals.forEach(s => {
+                        const fav = this.isFavorite(s) ? '⭐' : '☆';
+                        html += `<div class="syllable-chip" data-syllable="${s}">${s}<span class="fav-btn" data-syllable="${s}">${fav}</span></div>`;
+                    });
+                }
+                container.innerHTML = html;
+                this.bindChipEvents(container);
+            }
+
+            renderMinimalPairs() {
+                const container = document.getElementById('minimalList');
+                let html = '';
+                DATA.minimalPairs.forEach((pair) => {
+                    const [w1, zh1, w2, zh2] = pair;
+                    const fav1 = this.isFavorite(w1) ? '⭐' : '☆';
+                    const fav2 = this.isFavorite(w2) ? '⭐' : '☆';
+                    html += `<div class="minimal-pair">
+                                <div class="pair-item">
+                                    <span class="pair-word" data-syllable="${w1}">${w1}</span>
+                                    <span class="pair-zh">${zh1}</span>
+                                    <button class="pair-play" data-syllable="${w1}">🔊</button>
+                                    <span class="fav-btn" data-syllable="${w1}">${fav1}</span>
+                                </div>
+                                <div style="color:#94a3b8; font-size:18px;">⇄</div>
+                                <div class="pair-item">
+                                    <span class="pair-word" data-syllable="${w2}">${w2}</span>
+                                    <span class="pair-zh">${zh2}</span>
+                                    <button class="pair-play" data-syllable="${w2}">🔊</button>
+                                    <span class="fav-btn" data-syllable="${w2}">${fav2}</span>
+                                </div>
+                            </div>`;
+                });
+                container.innerHTML = html;
+                container.querySelectorAll('.pair-word').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const s = el.dataset.syllable;
+                        this.searchInput.value = s;
+                        this.showResult(s);
+                    });
+                });
+                container.querySelectorAll('.pair-play').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const s = el.dataset.syllable;
+                        this.tts.speak(s);
+                        this.showToast(`🔊 ${s}`);
+                    });
+                });
+                container.querySelectorAll('.fav-btn').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const s = el.dataset.syllable;
+                        this.toggleFavorite(s);
+                    });
+                });
+            }
+
+            renderFavorites() {
+                const container = document.getElementById('favoritesList');
+                if (this.favorites.length === 0) {
+                    container.innerHTML = '<p style="color:#94a3b8; font-size:14px; text-align:center; padding:20px 0;">暂无收藏</p>';
+                    return;
+                }
+                let html = '<div class="syllable-grid">';
+                this.favorites.forEach(s => {
+                    html += `<div class="syllable-chip" data-syllable="${s}">${s}<span class="fav-btn" data-syllable="${s}">⭐</span></div>`;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+                this.bindChipEvents(container);
+            }
+
+            bindChipEvents(container) {
+                container.querySelectorAll('.syllable-chip').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        if (e.target.classList.contains('fav-btn')) return;
+                        const s = el.dataset.syllable;
+                        this.searchInput.value = s;
+                        this.showResult(s);
+                    });
+                    const favBtn = el.querySelector('.fav-btn');
+                    if (favBtn) {
+                        favBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const s = favBtn.dataset.syllable;
+                            this.toggleFavorite(s);
+                        });
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = new App();
+            window.app = app;
+        });
+    </script>
+</body>
+</html>

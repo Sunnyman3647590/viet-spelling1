@@ -1,0 +1,32 @@
+{
+    "name": "越南语拼读",
+    "short_name": "越南语拼读",
+    "description": "越南语拼读学习工具（离线版）",
+    "id": "./index_all_in_one.html",
+    "start_url": "./index_all_in_one.html",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#f0f4f8",
+    "theme_color": "#1a73e8",
+    "icons": [
+        {
+            "src": "./icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "./icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "./icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

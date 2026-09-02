@@ -1,57 +1,24 @@
-// sw.js - Service Worker（离线缓存 index_all_in_one.html 整包）
-const CACHE_NAME = 'viet-pronounce-v3';
-const ENTRY = './index_all_in_one.html';
-const ASSETS = [
-    ENTRY,
-    './',
-    './manifest.json',
-    './icons/icon-192.png',
-    './icons/icon-512.png',
-    './icons/apple-touch-icon.png'
-];
-
-self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(ASSETS))
-            .then(() => self.skipWaiting())
-    );
+const CACHE = 'viet-pronounce-v7';
+const ASSETS = ['./', './index.html', './manifest.json',
+  './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
-
-self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(
-                keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-            )
-        ).then(() => self.clients.claim())
-    );
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
-
-self.addEventListener('fetch', event => {
-    const req = event.request;
-    if (req.method !== 'GET') return;
-    const url = new URL(req.url);
-    if (url.origin !== self.location.origin) return;
-
-    // 导航请求（打开页面）：网络优先，失败回退已缓存入口
-    if (req.mode === 'navigate') {
-        event.respondWith(
-            fetch(req).catch(() =>
-                caches.match(ENTRY).then(r => r || caches.match('./'))
-            )
-        );
-        return;
-    }
-
-    // 其他资源：缓存优先，缺失再走网络并写入缓存
-    event.respondWith(
-        caches.match(req).then(res =>
-            res || fetch(req).then(net => {
-                const clone = net.clone();
-                caches.open(CACHE_NAME).then(c => c.put(req, clone));
-                return net;
-            }).catch(() => res)
-        )
-    );
+// ⭐ 网络优先：在线时始终拉取最新代码/音频，彻底避免手机旧缓存导致"修了没变"
+self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+  if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
+  // ⭐ 音频/媒体请求不拦截，交给浏览器原生处理：iOS 播放 <audio> 必须服务器返回 206 Range 响应，
+  //    Service Worker 一旦拦截音频就会缓存/改写，导致 iOS 拒绝播放（表现为手机无声、桌面正常）
+  if (/\.(mp3|wav|ogg|m4a|mp4|webm)$/i.test(url.pathname)) return;
+  e.respondWith(
+    fetch(e.request).then(resp => {
+      const cp = resp.clone();
+      caches.open(CACHE).then(c => c.put(e.request, cp));
+      return resp;
+    }).catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
+  );
 });
